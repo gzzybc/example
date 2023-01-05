@@ -15,7 +15,6 @@
     "isolatedModules": true,
     "noEmit": true,
     "noImplicitAny": false,
-    "jsxImportSource": "./OwnReact",
     "jsx": "react-jsx"
   },
   "include": ["src"],

@@ -5,9 +5,9 @@
 // nodeValue: https://developer.mozilla.org/zh-CN/docs/Web/API/Node/nodeValue
 
 import App from './jsx'
-import { TEXT_ELEMENT } from './ownReact/jsx-dev-runtime'
+import { TEXT_ELEMENT } from './OwnReact'
 
-console.log(App())
+console.log(App)
 
 const element = {
   type: 'div',

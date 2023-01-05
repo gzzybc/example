@@ -5,10 +5,10 @@ import eslintPlugin from 'vite-plugin-eslint'
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [
-    react(),
-    eslintPlugin({
-      include: ['src/**/*.js', 'src/**/*.ts', 'src/**/*.tsx', 'src/**/*.jsx']
-    })
+    react()
+    // eslintPlugin({
+    //   include: ['src/**/*.js', 'src/**/*.ts', 'src/**/*.tsx', 'src/**/*.jsx']
+    // })
     // viteExternalsPlugin({
     //   vue: 'Vue',
     //   react: 'React',

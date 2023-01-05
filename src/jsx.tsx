@@ -1,7 +1,11 @@
-/** @jsx OwnReact */
+import OwnReact from './OwnReact'
+/** @jsxRuntime classic */
+/** @jsx OwnReact.createElement */
 const element = () => {
   return (
     <div id="container">
+
+
       <input value="foo" type="text" />
       <a href="/bar">
         bar
