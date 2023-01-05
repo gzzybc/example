@@ -3,7 +3,12 @@
  */
 
 // nodeValue: https://developer.mozilla.org/zh-CN/docs/Web/API/Node/nodeValue
-const TEXT_ELEMENT = 'TEXT ELEMENT'
+
+import App from './jsx'
+import { TEXT_ELEMENT } from './ownReact/jsx-dev-runtime'
+
+console.log(App())
+
 const element = {
   type: 'div',
   props: {
@@ -29,9 +34,8 @@ function render (element, parentDom) {
   const isTextElement = type === TEXT_ELEMENT
 
   const dom = isTextElement
-    ? document.createElement(type)
-    : document.createTextNode('')
-
+    ? document.createTextNode('')
+    : document.createElement(type)
   const isListener = event => event.startsWith('on')
   Object.keys(props).filter(isListener).forEach(key => {
     const eventType = key.toLowerCase().substring(2)
@@ -45,8 +49,10 @@ function render (element, parentDom) {
   const childrenElement = props.children || []
 
   childrenElement.forEach(child => {
+    console.dir(dom, 'dom')
     render(child, dom)
   })
+  // console.dir(parentDom)
   parentDom.appendChild(dom)
 }
 const container = document.getElementById('root')
