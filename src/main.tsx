@@ -7,30 +7,6 @@
 import App from "./jsx/test"
 import { TEXT_ELEMENT } from "./OwnReact"
 
-console.log(App())
-
-const element = {
-  type: "div",
-  props: {
-    id: "container",
-    children: [
-      { type: "input", props: { value: "foo", type: "text" } },
-      { type: "a", props: { href: "/bar" } },
-      {
-        type: "span",
-        props: {
-          children: [
-            {
-              type: TEXT_ELEMENT, // 1
-              props: { nodeValue: "Foo" }, // 2
-            },
-          ],
-        },
-      },
-    ],
-  },
-}
-
 function render(element, parentDom) {
   const { type, props } = element
   const isTextElement = type === TEXT_ELEMENT
@@ -61,4 +37,4 @@ function render(element, parentDom) {
 }
 const container = document.getElementById("root")
 
-render(element, container)
+render(App(), container)
