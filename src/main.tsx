@@ -4,7 +4,8 @@
 
 import * as Didact from "./Didact"
 import App from "./jsx/test"
+import { element } from "./jsx/index"
 
 const container = document.getElementById("root")
 
-Didact.render(App(), container)
+Didact.render(element(), container)
