@@ -1,19 +1,7 @@
-import { Didact } from "../Didact"
+import * as Didact from "../Didact"
 import OwnReact from "../OwnReact"
 /** @jsxRuntime classic */
 /** @jsx OwnReact.createElement */
-// const element = () => {
-//   return (
-//     <div id="container">
-//       <input value="foo" type="text" />
-//       <a href="/bar">bar</a>
-//       <span onClick={(e) => alert("Hi")}>click me</span>
-//       <p>{new Date().toLocaleTimeString()}</p>
-//     </div>
-//   )
-// }
-//
-// export default element
 
 const randomLikes = () => Math.ceil(Math.random() * 100)
 
@@ -65,7 +53,7 @@ function storyElement(story) {
 
 function handleClick(story) {
   story.likes += 1
-  Didact.instance.render(appElement())
+  Didact.render(appElement(), document.getElementById("root"))
 }
 
 export default appElement
