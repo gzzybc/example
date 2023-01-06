@@ -4,7 +4,11 @@
     "browser": true,
     "es2021": true
   },
-  "extends": ["plugin:react/recommended", "standard"],
+  "extends": [
+    "plugin:react/recommended",
+    "standard",
+    "plugin:prettier/recommended"
+  ],
   "parser": "@typescript-eslint/parser",
   "parserOptions": {
     "ecmaFeatures": {
@@ -18,12 +22,20 @@
       "version": "detect"
     }
   },
-  "plugins": ["react", "@typescript-eslint"],
+  "plugins": ["react", "@typescript-eslint", "prettier"],
   "rules": {
+    "prettier/prettier": [
+      "error",
+      {
+        "semi": false,
+        "printWidth": 100
+      }
+    ],
     "react/prop-types": 0,
     "no-debugger": "off",
     "react/react-in-jsx-scope": "off",
-    "multiline-ternary": ["error", "always"],
-    "max-len": ["error", { "code": 100 }]
+    //    "multiline-ternary": ["error", "always"],
+    "max-len": ["error", { "code": 100 }],
+    "dot-location": ["error", "property"]
   }
 }

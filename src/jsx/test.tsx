@@ -1,18 +1,12 @@
-import OwnReact from '../OwnReact'
+import OwnReact from "../OwnReact"
 /** @jsxRuntime classic */
 /** @jsx OwnReact.createElement */
 const element = () => {
   return (
     <div id="container">
-
-
       <input value="foo" type="text" />
-      <a href="/bar">
-        bar
-      </a>
-      <span onClick={(e) => alert('Hi')}>
-      click me
-    </span>
+      <a href="/bar">bar</a>
+      <span onClick={(e) => alert("Hi")}>click me</span>
       <p>{new Date().toLocaleTimeString()}</p>
     </div>
   )
