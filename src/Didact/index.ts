@@ -32,10 +32,16 @@ interface Instance {
    */
   element: Element
   /**
-   * 子元素实例
+   * 子元素实例列表
    */
   childInstances: Instance[]
+  /**
+   * 类组件 子元素
+   */
   childInstance: Instance | any
+  /**
+   * 自身的实例
+   */
   publicInstance?: any
 }
 
@@ -43,6 +49,7 @@ interface Instance {
 let rootInstance: any = null
 
 export function render(element: Element, container?: HTMLElement | null) {
+  debugger
   if (container) {
     rootInstance = reconcile(container, rootInstance, element)
   }
@@ -86,6 +93,7 @@ export function reconcile(
     instance.element = element
     return instance
   } else {
+    debugger
     instance.publicInstance.props = element.props
     const childElement = instance.publicInstance.render()
     const oldChildInstance = instance.childInstance
