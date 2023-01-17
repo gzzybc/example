@@ -1,222 +1,185 @@
-/**
- * Created by aio on 2023/1/6 12:44
- */
 import { TEXT_ELEMENT } from "../OwnReact"
 
-/**
- * 元素结构
- */
-interface Element {
-  /**
-   * 元素类型
-   */
-  type: any
-  /**
-   * 元素属性
-   */
-  props: {
-    children: Element[]
+const isEvent = (name) => name.startsWith("on")
+
+const isAttribute = (name) => !isEvent(name) && name !== "children" && name !== "style"
+
+const isNew = (prev, next) => (key) => prev[key] !== next[key]
+const isGone = (prev, next) => (key) => !(key in next)
+
+function updateDomProperties(dom, prevProps, nextProps) {
+  Object.keys(prevProps)
+    .filter(isEvent)
+    .filter((key) => !(key in nextProps) || isNew(prevProps, nextProps[key]))
+    .forEach((name) => {
+      const eventType = name.toLowerCase().substring(2)
+      dom.removeEventListener(eventType, prevProps[name])
+    })
+
+  Object.keys(prevProps)
+    .filter(isAttribute)
+    .filter(isGone(prevProps, nextProps))
+    .forEach((name) => (dom[name] = null))
+  Object.keys(nextProps)
+    .filter(isAttribute)
+    .filter(isNew(prevProps, nextProps))
+    .forEach((name) => (dom[name] = nextProps[name]))
+
+  prevProps.style = prevProps.style || {}
+  nextProps.style = nextProps.style || {}
+  Object.keys(nextProps.style)
+    .filter(isNew(prevProps.style, nextProps.style))
+    .forEach((key) => {
+      dom.style[key] = nextProps.style[key]
+    })
+  Object.keys(prevProps)
+    .filter(isGone(prevProps.style, nextProps.style))
+    .forEach((key) => {
+      dom.style[key] = ""
+    })
+
+  Object.keys(nextProps)
+    .filter(isEvent)
+    .filter(isNew(prevProps, nextProps))
+    .forEach((name) => {
+      const eventType = name.toLowerCase().substring(2)
+      dom.addEventListener(eventType, nextProps[name])
+    })
+}
+
+function createDomElement(fiber) {
+  const isTextElement = fiber.type === TEXT_ELEMENT
+  const dom = isTextElement ? document.createTextNode("") : document.createElement(fiber.type)
+
+  updateDomProperties(dom, [], fiber.props)
+  return dom
+}
+
+const HOST_COMPONENT = "host"
+const CLASS_COMPONENT = "class"
+const HOST_ROOT = "root"
+
+const updateQueue: any = []
+let nextUnitOfWork: any = null
+const pendingCommit = null
+
+const ENOUGH_TIME = 1
+
+function render(elements, containerDom) {
+  updateQueue.push({
+    from: HOST_ROOT,
+    dom: containerDom,
+    newProps: {
+      children: elements,
+    },
+  })
+  requestIdleCallback(performWork)
+}
+
+function scheduleUpdate(instance, partialState) {
+  updateQueue.push({
+    from: CLASS_COMPONENT,
+    instance,
+    partialState,
+  })
+  requestIdleCallback(performWork)
+}
+
+function performWork(deadline) {
+  workLoop(deadline)
+  if (nextUnitOfWork || updateQueue.length > 0) {
+    requestIdleCallback(performWork)
   }
 }
 
-/**
- * 当前元素实例
- */
-interface Instance {
-  /**
-   * 当前dom
-   */
-  dom: HTMLElement
-  /**
-   * 新的节点
-   */
-  element: Element
-  /**
-   * 子元素实例列表
-   */
-  childInstances: Instance[]
-  /**
-   * 类组件 子元素
-   */
-  childInstance: Instance | any
-  /**
-   * 自身的实例
-   */
-  publicInstance?: any
-}
-
-// eslint-disable-next-line no-use-before-define
-let rootInstance: any = null
-
-export function render(element: Element, container?: HTMLElement | null) {
-  debugger
-  if (container) {
-    rootInstance = reconcile(container, rootInstance, element)
+function workLoop(deadline) {
+  if (!nextUnitOfWork) {
+    //
   }
-}
-function createPublicInstance(element, internalInstance) {
-  const { type: Type, props } = element
-  const publicInstance = new Type(props)
-  publicInstance.__internalInstance = internalInstance
-  return publicInstance
-}
-/**
- * 是否渲染和 更新
- * @param parentDom 挂载节点
- * @param instance 根实例
- * @param element 新的节点
- */
-export function reconcile(
-  parentDom: HTMLElement,
-  instance: Instance,
-  element: Element
-): null | Instance {
-  // 实例不存在 直接新建
-  if (instance === null) {
-    const newInstance = instantiate(element)
-    parentDom.appendChild(newInstance.dom)
-    return newInstance
-  } else if (element === null) {
-    // 新的元素不存在直接删除
-    parentDom.removeChild(instance.dom)
-    return null
-  } else if (instance.element.type !== element.type) {
-    // 直接替换掉
-    const newInstance = instantiate(element)
-    parentDom.replaceChild(newInstance.dom, instance.dom)
-    return newInstance
-  } else if (typeof element.type === "string") {
-    // 相同元素 更新属性
-    updateDomProperties(instance.dom, instance.element.props, element.props)
-    //  递归处理子元素
-    instance.childInstances = reconcileChildren(instance, element)
-    instance.element = element
-    return instance
-  } else {
-    debugger
-    instance.publicInstance.props = element.props
-    const childElement = instance.publicInstance.render()
-    const oldChildInstance = instance.childInstance
-    const childInstance = reconcile(parentDom, oldChildInstance, childElement)
-    instance.dom = childInstance.dom // 更新-dom
-    instance.childInstance = childInstance // 更新-虚拟dom数
-    instance.element = element // 更新-Didact元素
-    return instance
+  while (nextUnitOfWork && deadline.timeRemaining() > ENOUGH_TIME) {
+    nextUnitOfWork = performUnitOfWork(nextUnitOfWork)
+  }
+  if (pendingCommit) {
+    commitAllWork(pendingCommit)
   }
 }
 
-/**
- * 对比子元素的实例
- * 返回新的 元素实例
- * @param instance 元素实例
- * @param element 元素
- */
-export function reconcileChildren(instance: Instance, element: Element): Instance[] {
-  const dom = instance.dom
-  const childInstance = instance.childInstances
-  const children = element.props.children
-  const newChildInstances: Array<Instance> = []
-
-  const len = Math.max(childInstance.length, children.length)
-  // 遍历比较实例和元素
-  for (let i = 0; i < len; i++) {
-    newChildInstances.push(reconcile(dom, childInstance[i], children[i]) as Instance)
+function commitAllWork() {}
+function performUnitOfWork(wipFiber) {
+  beginWork(wipFiber)
+  if (wipFiber.child) {
+    return wipFiber.child
   }
-  return newChildInstances.filter((instance) => instance !== null)
-}
 
-/**
- * 创建实例
- * @param element 新节点
- */
-export function instantiate(element): Instance {
-  const { type, props } = element
-  if (typeof type === "string") {
-    const isTextElement = type === TEXT_ELEMENT
+  let uow = wipFiber
 
-    const dom: any = isTextElement ? document.createTextNode("") : document.createElement(type)
-    updateDomProperties(dom, [], props)
-
-    const childrenElement = props.children || []
-    const childInstances = childrenElement.map((child) => instantiate(child))
-    childInstances.forEach((childDom) => dom.appendChild(childDom.dom))
-    return {
-      dom,
-      element,
-      childInstances,
-      childInstance: null,
+  while (uow) {
+    completeWork(uow)
+    if (uow.sibling) {
+      return uow.sibling
     }
+    uow = uow.parent
+  }
+}
+function completeWork() {}
+function beginWork(wipFiber) {
+  if (wipFiber.tag === CLASS_COMPONENT) {
+    updateClssComponent(wipFiber)
   } else {
-    const instance = {} as Instance
-    const publicInstance = createPublicInstance(element, instance)
-    const childElement = publicInstance.render()
-    const childInstance = instantiate(childElement)
-    const dom = childInstance.dom
-
-    Object.assign(instance, {
-      dom,
-      element,
-      childInstance,
-      publicInstance,
-    })
-    return instance
+    updateHostComponent(wipFiber)
   }
 }
 
-/**
- * 更新dom 属性
- * @param dom
- * @param prevProps
- * @param nextProps
- */
-export function updateDomProperties(dom: HTMLElement, prevProps, nextProps): void {
-  const isListener = (event) => event.startsWith("on")
-  const isAttribute = (name) => !isListener(name) && name !== "children"
-
-  Object.keys(prevProps)
-    .filter(isListener)
-    .forEach((key) => {
-      const eventType = key.toLowerCase().substring(2)
-      dom.removeEventListener(eventType, prevProps[key])
-    })
-
-  Object.keys(prevProps)
-    .filter(isAttribute)
-    .forEach((key) => {
-      dom[key] = null
-    })
-
-  Object.keys(nextProps)
-    .filter(isListener)
-    .forEach((key) => {
-      const eventType = key.toLowerCase().substring(2)
-      dom.addEventListener(eventType, nextProps[key])
-    })
-  // nodeValue: https://developer.mozilla.org/zh-CN/docs/Web/API/Node/nodeValue
-  Object.keys(nextProps)
-    .filter(isAttribute)
-    .forEach((key) => {
-      dom[key] = nextProps[key]
-    })
+function updateClssComponent(wipFiber) {
+  if (!wipFiber.stateNode) {
+    wipFiber.stateNode = createDomElement(wipFiber)
+  }
+  const newChildElements = wipFiber.props.children
+  reconcileChildArray(wipFiber, newChildElements)
 }
 
-export function updateInstance(internalInstance) {
-  const parentDom = internalInstance.dom.parentNode
-  const element = internalInstance.element
+function updateHostComponent(wipFiber) {
+  let instance = wipFiber.stateNode
+  if (instance === null) {
+    instance = wipFiber.stateNode = createInstance(wipFiber)
+  } else if (wipFiber.props === instance.props && !wipFiber.partialState) {
+    cloneChildFibers(wipFiber)
+    return
+  }
 
-  reconcile(parentDom, internalInstance, element) // 对比-虚拟dom树
+  instance.props = wipFiber.props
+  instance.state = Object.assign({}, instance.state, wipFiber.partialState)
+  wipFiber.partialState = null
+
+  const newChildElements = wipFiber.stateNode.render()
+  reconcileChildArray(wipFiber, newChildElements)
 }
-export class Component {
-  state: Object = {}
-  props: Object = {}
-  __internalInstance!: any
-  constructor(props) {
-    this.props = props
-    this.state = this.state || {}
+
+function reconcileChildArray(wipFiber, newChildElements) {}
+function resetNextUnitOfWork() {
+  const update = updateQueue.shift()
+  if (!update) {
+    return
   }
 
-  setState(props) {
-    this.state = Object.assign({}, this.props, props)
-    updateInstance(this.__internalInstance) // 更新 虚拟-Dom树和 更新 html
+  if (update.partialState) {
+    update.instance.__fiber.partialState = update.partialState
   }
+  const root =
+    update.from === HOST_ROOT ? update.dom._rootContainerFiber : getRoot(update.in.__fiber)
+
+  nextUnitOfWork = {
+    tag: HOST_ROOT,
+    stateNode: update.dom || root.stateNode,
+    props: update.newProps || root.props,
+    alternate: root,
+  }
+}
+
+function getRoot(fiber) {
+  let node = fiber
+  while (node.parent) {
+    node = node.parent
+  }
+  return node
 }

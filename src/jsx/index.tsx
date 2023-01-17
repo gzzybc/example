@@ -1,5 +1,4 @@
 import OwnReact from "../OwnReact"
-import Story from "./Story"
 /** @jsxRuntime classic */
 /** @jsx OwnReact.createElement */
 
@@ -16,10 +15,21 @@ export const element = () => {
     <div>
       <h1>Didact Stories</h1>
       <ul>
-        {stories.map((story) => {
+        {stories.map((story, index) => {
           // @ts-ignore
           // eslint-disable-next-line react/jsx-key
-          return <Story name={story.name} url={story.url} />
+          return (
+            <li key={index}>
+              <button
+                onClick={(e) => {
+                  console.log(e)
+                }}
+              >
+                <b>❤️</b>
+              </button>
+              <a href={story.url}>{story.name}</a>
+            </li>
+          )
         })}
       </ul>
     </div>
