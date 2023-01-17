@@ -4,19 +4,26 @@
  */
 export const TEXT_ELEMENT = "TEXT ELEMENT"
 class OwnReact {
-  static createTextElement(value: any) {
-    return OwnReact.createElement(TEXT_ELEMENT, {
-      nodeValue: value,
-    })
+  static createTextElement(text) {
+    return {
+      type: "TEXT_ELEMENT",
+      props: {
+        nodeValue: text,
+        children: [],
+      },
+    }
   }
 
-  static createElement(type, config: any, ...args: any) {
-    const props = Object.assign({}, config)
-    props.children = args.length > 0 ? [].concat(...args) : []
-    props.children = props.children
-      .filter((c) => c !== null && c !== false)
-      .map((c) => (c instanceof Object ? c : OwnReact.createTextElement(c)))
-    return { type, props }
+  static createElement(type, props, ...children) {
+    return {
+      type,
+      props: {
+        ...props,
+        children: children.map((child) =>
+          typeof child === "object" ? child : OwnReact.createTextElement(child)
+        ),
+      },
+    }
   }
 }
 
